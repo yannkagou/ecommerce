@@ -35,11 +35,16 @@
 
           <div class="navbar-item">
             <div class="buttons">
-              <router-link to="/log-in" class="button is-light">Log in</router-link>
+
+              <router-link v-if="store.isAuthenticated" to="/myaccount" class="button is-light">My Account</router-link>
+
+              <router-link v-else to="/login" class="button is-light">Log in</router-link>
+
               <router-link to="/cart" class="button is-success">
                 <span class="icon"><i class="fas fa-bell"></i></span>
                 <span>Cart ({{ cartTotalLength }})</span> 
               </router-link>
+
             </div>
           </div>
         </div>
@@ -63,30 +68,29 @@
 </template>
 
 <script setup>
-import { computed, onBeforeMount, onMounted, reactive, ref } from 'vue';
+import axios from 'axios';
+import { computed, onBeforeMount, ref } from 'vue';
 import { usecartStore } from '../src/stores/index.js'
 
 const store = usecartStore();
 
-onBeforeMount(() => {
-  store.initializeStore();
-  cart = store.cart;
-  console.log(cart);
-})
 
 let showMobileMenu = ref(false);
 
-
-let cart = reactive({
-  items: []
-});
-
+onBeforeMount(() => {
+  store.initializeStore();
+  const token = store.token;
+  if (token){
+    axios.defaults.headers.common['Authorization'] = 'Token' + token
+  } else {
+    axios.defaults.headers.common['Authorization'] = ''
+  }
+})
 
 const cartTotalLength = computed(() => {
   let totalLength = 0;
-  for (let i = 0; i < cart.items.length; i++) {
-    totalLength += cart.items[i].quantity;
-    console.log(totalLength);
+  for (let i = 0; i < store.cart.items.length; i++) {
+    totalLength += store.cart.items[i].quantity;
   }
   return totalLength;
 });

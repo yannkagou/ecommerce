@@ -29,7 +29,7 @@
 <script setup>
 import axios from "axios";
 import { toast } from 'bulma-toast'
-import { onBeforeMount, onMounted, reactive, ref } from "vue";
+import { onBeforeMount, reactive, ref } from "vue";
 import { useRoute } from 'vue-router';
 import { usecartStore } from '../stores/index';
 

@@ -43,7 +43,6 @@ const getLatestProducts = async () =>{
   await axios
     .get('/api/v1/latest-products/')
     .then(response => {
-      console.log(response.data)
       latestProducts.value = response.data
     })
     .catch(error => {
