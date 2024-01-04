@@ -57,6 +57,12 @@ export const usecartStore = defineStore({
         removeToken() {
             this.token = '',
             this.isAuthenticated = false
+        },
+        clearCart() {
+            this.cart = {
+                items: []
+            }
+            localStorage.setItem('cart', JSON.stringify(this.cart))
         }
     }
 })

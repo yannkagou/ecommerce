@@ -117,8 +117,10 @@
 <script setup>
 import axios from "axios";
 import { onBeforeMount, onMounted, reactive, ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { usecartStore } from '../stores/index';
 
+const router = useRouter();
 const store = usecartStore();
 
 let cart = reactive({
@@ -126,6 +128,8 @@ let cart = reactive({
 })
 
 let stripe = reactive({})
+
+let elements = reactive({})
 
 let card = reactive({})
 
@@ -141,11 +145,18 @@ let errors = ref([])
 
 onBeforeMount(() => {
   store.initializeStore();
-  cart = store.cart
+  cart = store.cart;
+  stripe = Stripe('pk_test_51OK45DEWs8EQSsWt5vE03jFDHDbLoEYmlBaRAcRpk0k9hcNBNSYVGR1moxHRVlTB04KYdIBReEsRQGLcxiSNIEZy004Jvc8VlB')
+  elements = stripe.elements();
+
 })
 
 onMounted(() => {
-    document.title = 'Checkout | Djackets'  
+    document.title = 'Checkout | Djackets'
+    if(CartTotalLength.value) {
+        card = elements.create('card', { hidePostalCode: true })
+        card.mount('#card-element')
+    }
 })
 
 function getItemTotal(item){
@@ -176,6 +187,58 @@ function submitForm(){
     if (place.value === ''){
         errors.value.push('The place is missing!')
     }
+
+    if (!errors.value.length){
+        store.setIsLoading(true)
+        stripe.createToken(card).then(result => {
+            if (result.error){
+                store.setIsLoading(false)
+                errors.value.push('Something went wrong with Stripe. Please try again')
+                console.log(result.error.message)
+            } else {
+                stripeTokenHandler(result.token)
+            }
+        })
+    }
+}
+
+async function stripeTokenHandler(token) {
+    const items = []
+
+    for (let i = 0; i < cart.items.length; i++) {
+        const item = cart.items[i]
+        const obj = {
+            product: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price * item.quantity
+        }
+        items.push(obj)
+    }
+
+    const data = {
+        "first_name": first_name.value,
+        "last_name": last_name.value,
+        "email": email.value,
+        "address": address.value,
+        "zipcode": zipcode.value,
+        "place": place.value,
+        "phone": phone.value,
+        "stripe_token": token.id,
+        "items": items,
+    }
+
+    await axios
+        .post('/api/v1/checkout/', data)
+        .then(response => {
+            store.clearCart()
+            router.push('/cart/success')
+        })
+        .catch(error => {
+            errors.value.push('Something went wrong. Please try again')
+            console.log(error)
+        })
+
+        store.setIsLoading(false)
 }
 
 const CartTotalLength = computed(() => {
