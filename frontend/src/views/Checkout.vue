@@ -18,7 +18,7 @@
                     <tbody>
                         <tr v-for="item in cart.items" :key="item.product.id">
                             <td>{{ item.product.name }}</td>
-                            <td>{{ item.product.price }}</td>
+                            <td>${{ item.product.price }}</td>
                             <td>{{ item.quantity }}</td>
                             <td>${{ getItemTotal(item).toFixed(2) }}</td>
                         </tr>
@@ -145,6 +145,12 @@ let errors = ref([])
 
 onBeforeMount(() => {
   store.initializeStore();
+  const token = store.token;
+  if (token){
+    axios.defaults.headers.common['Authorization'] = 'Token' + token
+  } else {
+    axios.defaults.headers.common['Authorization'] = ''
+  }
   cart = store.cart;
   stripe = Stripe('pk_test_51OK45DEWs8EQSsWt5vE03jFDHDbLoEYmlBaRAcRpk0k9hcNBNSYVGR1moxHRVlTB04KYdIBReEsRQGLcxiSNIEZy004Jvc8VlB')
   elements = stripe.elements();
